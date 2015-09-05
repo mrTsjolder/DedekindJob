@@ -157,8 +157,10 @@ public class ThirdOrderAlgorithm {
 
 		if(waitForOthers()) {
 			try {
+				//TODO: null-values???
 				Map<MNECode, Long> merged = gatherAllMunuetaEquivalenceClasses().stream()
 						.map(Map::entrySet).flatMap(Set::stream)
+						.filter(a -> a != null)
 						.collect(Collectors.toMap(
 								Entry::getKey, 
 								Entry::getValue, 
