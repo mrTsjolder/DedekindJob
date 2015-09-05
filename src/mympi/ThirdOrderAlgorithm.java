@@ -247,7 +247,7 @@ public class ThirdOrderAlgorithm {
 		byte[] sendbuf = serialize((Serializable) getState().getMunuetaEquivalenceClasses());
 		int[] recvcounts = new int[getNumberOfNodes()];
 		
-		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, recvcounts.length, MPI.INT);
+		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT);
 		
 		int[] displs = new int[recvcounts.length];
 		displs[0] = 0;
@@ -268,7 +268,7 @@ public class ThirdOrderAlgorithm {
 		Collection<BigInteger> collected = new ArrayList<>(getNumberOfNodes());
 		byte[] sendbuf = getState().getSum().toByteArray();
 		int[] recvcounts = new int[getNumberOfNodes()];
-		MPI.COMM_WORLD.gather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, recvcounts.length, MPI.INT, ROOT_RANK);
+		MPI.COMM_WORLD.gather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT, ROOT_RANK);
 		int[] displs = new int[recvcounts.length];
 		displs[0] = 0;
 		for(int i = 1; i < recvcounts.length; i++)
