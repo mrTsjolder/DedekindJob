@@ -220,8 +220,8 @@ abstract class ComputationState implements Serializable {
 	 * @see #resetCounter()
 	 */
 	protected void incrementCounter() {
-		if(--counter < 0)
-			setCounter(getNumberOfNodes());
+		if(++counter == getNumberOfNodes())
+			resetCounter();
 	}
 	
 	/**
