@@ -189,7 +189,7 @@ public class ThirdOrderAlgorithm {
 				factor = mne.rhoIntegral(nMin3) * entry.getValue();
 
 				for(AntiChain abc : new AntiChainInterval(mne.getBottom(), mne.getMaxBottom()))
-					getState().addToSum(BigInteger.valueOf(mne.p3(abc) * intervalSizes.get(abc) * factor));
+					getState().addToSum(BigInteger.valueOf(mne.p3(abc) * intervalSizes.get(abc.standard()) * factor));
 
 			}
 
@@ -276,10 +276,12 @@ public class ThirdOrderAlgorithm {
 		byte[] recvbuf = new byte[displs[displs.length-1] + recvcounts[displs.length -1]];
 		MPI.COMM_WORLD.gatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE, ROOT_RANK);
 		
-		for(int i = 1; i < displs.length; i++)
-			collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[i - 1], displs[i])));
-		collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
-		
+		if(getRank() == ROOT_RANK) {
+			for(int i = 1; i < displs.length; i++)
+				collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[i - 1], displs[i])));
+			collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
+		}
+			
 		return collected;
 	}
 	
