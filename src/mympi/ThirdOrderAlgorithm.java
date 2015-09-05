@@ -246,14 +246,20 @@ public class ThirdOrderAlgorithm {
 		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
 		byte[] sendbuf = serialize((Serializable) getState().getMunuetaEquivalenceClasses());
 		int[] recvcounts = new int[getNumberOfNodes()];
+		
 		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, recvcounts.length, MPI.INT);
+		
 		int[] displs = new int[recvcounts.length];
 		displs[0] = 0;
 		for(int i = 1; i < recvcounts.length; i++)
 			displs[i] = displs[i-1] + recvcounts[i - 1];
 		byte[] recvbuf = new byte[displs[displs.length -1] + recvcounts[displs.length - 1]];
+		
 		MPI.COMM_WORLD.allGatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE);
 		
+		for(int i = 1; i < displs.length; i++)
+			result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[i-1], displs[i])));
+		result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
 		
 		return result;
 	}
@@ -270,9 +276,9 @@ public class ThirdOrderAlgorithm {
 		byte[] recvbuf = new byte[displs[displs.length-1] + recvcounts[displs.length -1]];
 		MPI.COMM_WORLD.gatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE, ROOT_RANK);
 		
-		for(int i = 1; i < recvcounts.length; i++)
+		for(int i = 1; i < displs.length; i++)
 			collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[i - 1], displs[i])));
-		collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length - 1)));
+		collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
 		
 		return collected;
 	}
