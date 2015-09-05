@@ -139,9 +139,9 @@ public class ThirdOrderAlgorithm {
 		MNECode code;
 
 		while(it.hasNext() && !isInterrupted()) {
+			entry = it.next();
 			// static distribution of work
 			if(getState().myTurn()) {
-				entry = it.next();
 				mu = entry.getKey();
 
 				for(AntiChain nu : space) {
@@ -182,9 +182,9 @@ public class ThirdOrderAlgorithm {
 		long factor;
 
 		while(it.hasNext() && !isInterrupted()) {
+			entry = it.next();
 			// static distribution of work
 			if(getState().myTurn()) {
-				entry = it.next();
 				mne = MuNuEta.decode(entry.getKey());
 				factor = mne.rhoIntegral(nMin3) * entry.getValue();
 
