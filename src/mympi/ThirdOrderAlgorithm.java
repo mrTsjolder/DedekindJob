@@ -198,7 +198,9 @@ public class ThirdOrderAlgorithm {
 
 		if(waitForOthers()) {
 			try {
-				gatherSum();
+				BigInteger summed = gatherSum().stream().reduce(BigInteger.ZERO, BigInteger::add);
+				if(waitForOthers())
+					getState().setSum(summed);
 			} catch (MPIException e) {
 				e.printStackTrace();
 			}
