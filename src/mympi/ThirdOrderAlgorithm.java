@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import amfsmall.AntiChain;
@@ -164,7 +165,8 @@ public class ThirdOrderAlgorithm {
 						.collect(Collectors.toMap(
 								Entry::getKey, 
 								Entry::getValue, 
-								(v1, v2) -> v1 + v2));
+								(v1, v2) -> v1 + v2,
+								TreeMap::new));
 				
 				if(waitForOthers())
 					getState().setMunuetaEquivalenceClasses(merged);
