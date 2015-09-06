@@ -200,6 +200,16 @@ public class MuNuEta implements Comparable<MuNuEta> {
 		return eta.compareTo(o.eta);
 	}
 	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((eta == null) ? 0 : eta.hashCode());
+		result = prime * result + ((mu == null) ? 0 : mu.hashCode());
+		result = prime * result + ((nu == null) ? 0 : nu.hashCode());
+		return result;
+	}
+	
 	/**
 	 * equality consistent with
 	 * lexicographic comparison building on comparison of antichains
