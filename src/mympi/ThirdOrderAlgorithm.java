@@ -273,7 +273,8 @@ public class ThirdOrderAlgorithm {
 
 	private Collection<BigInteger> gatherSum() throws MPIException {
 		Collection<BigInteger> collected = new ArrayList<>(getNumberOfNodes());
-		byte[] sendbuf = getState().getSum().toByteArray();
+		byte[] sendbuf = getState().getSum() == null ? 
+				BigInteger.ZERO.toByteArray() : getState().getSum().toByteArray();
 		int[] recvcounts = new int[getNumberOfNodes()];
 		MPI.COMM_WORLD.gather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT, ROOT_RANK);
 		int[] displs = new int[recvcounts.length];
