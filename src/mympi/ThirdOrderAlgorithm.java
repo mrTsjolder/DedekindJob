@@ -159,9 +159,7 @@ public class ThirdOrderAlgorithm {
 
 		if(waitForOthers()) {
 			try {
-				//TODO: null-values???
 				Map<MNECode, Long> merged = gatherAllMunuetaEquivalenceClasses().stream()
-						.filter(a -> a != null)
 						.map(Map::entrySet).flatMap(Set::stream)
 						.collect(Collectors.toMap(
 								Entry::getKey, 
@@ -251,7 +249,9 @@ public class ThirdOrderAlgorithm {
 	private Collection<Map<MNECode, Long>> gatherAllMunuetaEquivalenceClasses() 
 			throws ClassCastException, MPIException {
 		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
-		byte[] sendbuf = serialize((Serializable) getState().getMunuetaEquivalenceClasses());
+		byte[] sendbuf = getState().getMunuetaEquivalenceClasses() == null ? 
+				serialize(new TreeMap<>()) 
+				: serialize((Serializable) getState().getMunuetaEquivalenceClasses());
 		int[] recvcounts = new int[getNumberOfNodes()];
 		
 		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT);
