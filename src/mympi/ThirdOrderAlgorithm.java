@@ -249,26 +249,40 @@ public class ThirdOrderAlgorithm {
 	private Collection<Map<MNECode, Long>> gatherAllMunuetaEquivalenceClasses() 
 			throws ClassCastException, MPIException {
 		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
-		byte[] sendbuf = getState().getMunuetaEquivalenceClasses() == null ? 
-				serialize(new TreeMap<>()) 
-				: serialize((Serializable) getState().getMunuetaEquivalenceClasses());
-		int[] recvcounts = new int[getNumberOfNodes()];
+		byte[] sendbuf = serialize((Serializable) getState().getMunuetaEquivalenceClasses());
+		int[] count;
+		byte[] buf;
 		
-		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT);
-		
-		int[] displs = new int[recvcounts.length];
-		displs[0] = 0;
-		for(int i = 1; i < recvcounts.length; i++)
-			displs[i] = displs[i-1] + recvcounts[i - 1];
-		byte[] recvbuf = new byte[displs[displs.length -1] + recvcounts[displs.length - 1]];
-		
-		MPI.COMM_WORLD.allGatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE);
-		
-		for(int i = 1; i < displs.length; i++)
-			result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[i-1], displs[i])));
-		result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
+		for(int i = 0; i < getNumberOfNodes(); i++) {
+			count = getRank() == i ? new int[]{sendbuf.length} : new int[1];
+			MPI.COMM_WORLD.bcast(count, count.length, MPI.INT, i);
+			buf = getRank() == i ? buf = sendbuf : new byte[count[0]];
+			MPI.COMM_WORLD.bcast(buf, buf.length, MPI.BYTE, i);
+			result.add((Map<MNECode, Long>) deserialize(buf));
+		}
 		
 		return result;
+//		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
+//		byte[] sendbuf = getState().getMunuetaEquivalenceClasses() == null ? 
+//				serialize(new TreeMap<>()) 
+//				: serialize((Serializable) getState().getMunuetaEquivalenceClasses());
+//		int[] recvcounts = new int[getNumberOfNodes()];
+//		
+//		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT);
+//		
+//		int[] displs = new int[recvcounts.length];
+//		displs[0] = 0;
+//		for(int i = 1; i < recvcounts.length; i++)
+//			displs[i] = displs[i-1] + recvcounts[i - 1];
+//		byte[] recvbuf = new byte[displs[displs.length -1] + recvcounts[displs.length - 1]];
+//		
+//		MPI.COMM_WORLD.allGatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE);
+//		
+//		for(int i = 1; i < displs.length; i++)
+//			result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[i-1], displs[i])));
+//		result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
+//		
+//		return result;
 	}
 
 	private Collection<BigInteger> gatherSum() throws MPIException {
