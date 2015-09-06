@@ -104,6 +104,7 @@ public class ThirdOrderAlgorithm {
 		getState().computeEquivalenceClasses(this);
 		getState().computeLeftIntervalSizes(this);
 		getState().computeMunuetaEquivalenceClasses(this);
+		System.out.println(getState().getMunuetaEquivalenceClasses());
 		getState().computeSum(this);
 		return getState().getSum();
 	}
