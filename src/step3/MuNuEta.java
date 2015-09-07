@@ -757,6 +757,25 @@ public class MuNuEta implements Comparable<MuNuEta> {
 		}
 		
 		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((e == null) ? 0 : e.hashCode());
+			result = prime * result + ((m == null) ? 0 : m.hashCode());
+			result = prime * result + ((n == null) ? 0 : n.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			try {
+				return compareTo((MNECode) obj) == 0;
+			} catch (Exception e) {
+				return false;
+			}
+		}
+		
+		@Override
 		public String toString() {
 			return "(" + AntiChain.decode(m) + ", "
 					+ AntiChain.decode(n) + ", "
