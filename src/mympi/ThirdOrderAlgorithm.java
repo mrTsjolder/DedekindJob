@@ -603,7 +603,7 @@ public class ThirdOrderAlgorithm {
 
 		ThirdOrderAlgorithm node;
 		if(recover) {
-			ComputationState state = ComputationState.recoverState(myRank, nrOfNodes, n);
+			ComputationState state = ComputationState.recoverState(n, myRank, nrOfNodes);
 			node = new ThirdOrderAlgorithm(state);
 		} else {
 			node = new ThirdOrderAlgorithm(myRank, nrOfNodes, n);
