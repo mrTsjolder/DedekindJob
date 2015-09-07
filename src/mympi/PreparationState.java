@@ -69,7 +69,7 @@ class PreparationState extends ComputationState {
 		setLeftIntervalSizes((Map<AntiChain, Long>) in.readObject());
 		setMunuetaEquivalenceClasses((Map<MNECode, Long>) in.readObject());
 		// turn back counter with one, because the last iteration failed
-		setCounter(in.readInt() - 2);
+		setCounter(in.readInt() - 1);
 	}
 	
 	@Override

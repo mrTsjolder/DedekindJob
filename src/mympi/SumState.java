@@ -71,7 +71,7 @@ class SumState extends ComputationState {
 		setMunuetaEquivalenceClasses((Map<MNECode, Long>) in.readObject());
 		setSum((BigInteger) in.readObject());
 		// turn back counter with one, because the last iteration failed
-		setCounter(in.readInt() - 2);
+		setCounter(in.readInt() - 1);
 	}
 	
 	@Override
