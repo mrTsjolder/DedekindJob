@@ -35,13 +35,13 @@ class PreparationState extends ComputationState {
 	@Override
 	Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
 		long start = System.currentTimeMillis();
-		algo.computeMunuetaEquivalenceClasses(getEquivalenceClasses());
+		algo.computeMunuetaEquivalenceClasses();
 		addTiming("munueta equivalence classes", System.currentTimeMillis() - start);
 
 		// the only way the state transition should not take place
 		// is when the program has not been interrupted...
 		if(!algo.isInterrupted())
-			algo.setState(new SumState(this));
+			algo.setCurrentState(new SumState(this));
 		
 		return getMunuetaEquivalenceClasses();
 	}

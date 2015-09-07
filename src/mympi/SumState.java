@@ -43,13 +43,13 @@ class SumState extends ComputationState {
 	@Override
 	BigInteger computeSum(ThirdOrderAlgorithm algo) {
 		long start = System.currentTimeMillis();
-		algo.computeSum(getMunuetaEquivalenceClasses(), getLeftIntervalSizes());
+		algo.computeSum();
 		addTiming("sum", System.currentTimeMillis() - start);
 		
 		// the only way the state transition should not take place
 		// is when the program has not been interrupted...
 		if(!algo.isInterrupted())
-			algo.setState(new FinishedState(this));
+			algo.setCurrentState(new FinishedState(this));
 		
 		return getSum();
 	}

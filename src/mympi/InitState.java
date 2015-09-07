@@ -39,9 +39,9 @@ class InitState extends ComputationState {
 			throw new IllegalStateException(
 					"equivalence classes should be computed first");
 		long start = System.currentTimeMillis();
-		algo.computeLeftIntervalSizes(getEquivalenceClasses().keySet());
+		algo.computeLeftIntervalSizes();
 		addTiming("left interval sizes", System.currentTimeMillis() - start);
-		algo.setState(new PreparationState(this));
+		algo.setCurrentState(new PreparationState(this));
 		return getLeftIntervalSizes();
 	}
 
