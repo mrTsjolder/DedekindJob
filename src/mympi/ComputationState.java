@@ -50,7 +50,7 @@ abstract class ComputationState implements Serializable {
 	private static final long serialVersionUID = 4547438662143346534L;
 	/** string to be formatted with 3 integers 
 	 * to form a filename for files storing a state object */
-	private static final String FILENAME_FORMAT = "Dedekind%d-State(%d/%d).ser";
+	private static final String FILENAME_FORMAT = "Dedekind%d-State%dof%d.ser";
 	
 	private final int rank;
 	private final int numberOfNodes;
