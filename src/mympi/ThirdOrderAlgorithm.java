@@ -18,6 +18,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
+
 import amfsmall.AntiChain;
 import amfsmall.AntiChainInterval;
 import amfsmall.AntiChainSolver;
@@ -249,7 +251,9 @@ public class ThirdOrderAlgorithm {
 	private Collection<Map<MNECode, Long>> gatherAllMunuetaEquivalenceClasses() 
 			throws ClassCastException, MPIException {
 		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
-		byte[] sendbuf = serialize((Serializable) getState().getMunuetaEquivalenceClasses());
+		byte[] sendbuf = getState().getMunuetaEquivalenceClasses() == null ?
+				serialize((Serializable) java.util.Collections.emptyMap()) 
+				: serialize((Serializable) getState().getMunuetaEquivalenceClasses());
 		int[] count;
 		byte[] buf;
 		
@@ -262,49 +266,36 @@ public class ThirdOrderAlgorithm {
 		}
 		
 		return result;
-//		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
-//		byte[] sendbuf = getState().getMunuetaEquivalenceClasses() == null ? 
-//				serialize(new TreeMap<>()) 
-//				: serialize((Serializable) getState().getMunuetaEquivalenceClasses());
-//		int[] recvcounts = new int[getNumberOfNodes()];
-//		
-//		MPI.COMM_WORLD.allGather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT);
-//		
-//		int[] displs = new int[recvcounts.length];
-//		displs[0] = 0;
-//		for(int i = 1; i < recvcounts.length; i++)
-//			displs[i] = displs[i-1] + recvcounts[i - 1];
-//		byte[] recvbuf = new byte[displs[displs.length -1] + recvcounts[displs.length - 1]];
-//		
-//		MPI.COMM_WORLD.allGatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE);
-//		
-//		for(int i = 1; i < displs.length; i++)
-//			result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[i-1], displs[i])));
-//		result.add((Map<MNECode, Long>) deserialize(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
-//		
-//		return result;
 	}
 
 	private Collection<BigInteger> gatherSum() throws MPIException {
-		Collection<BigInteger> collected = new ArrayList<>(getNumberOfNodes());
+		Collection<BigInteger> result = new ArrayList<>(getNumberOfNodes());
 		byte[] sendbuf = getState().getSum() == null ? 
 				BigInteger.ZERO.toByteArray() : getState().getSum().toByteArray();
 		int[] recvcounts = new int[getNumberOfNodes()];
-		MPI.COMM_WORLD.gather(new int[]{sendbuf.length}, 1, MPI.INT, recvcounts, 1, MPI.INT, ROOT_RANK);
+		
+		MPI.COMM_WORLD.gather(new int[]{sendbuf.length}, 1, MPI.INT, 
+				recvcounts, 1, MPI.INT, ROOT_RANK);
+		
 		int[] displs = new int[recvcounts.length];
 		displs[0] = 0;
 		for(int i = 1; i < recvcounts.length; i++)
 			displs[i] = displs[i - 1] + recvcounts[i - 1];
-		byte[] recvbuf = new byte[displs[displs.length-1] + recvcounts[displs.length -1]];
-		MPI.COMM_WORLD.gatherv(sendbuf, sendbuf.length, MPI.BYTE, recvbuf, recvcounts, displs, MPI.BYTE, ROOT_RANK);
+		
+		byte[] recvbuf = new byte[displs[displs.length-1] + recvcounts[recvcounts.length -1]];
+		MPI.COMM_WORLD.gatherv(sendbuf, sendbuf.length, MPI.BYTE, 
+				recvbuf, recvcounts, displs, MPI.BYTE, ROOT_RANK);
 		
 		if(getRank() == ROOT_RANK) {
 			for(int i = 1; i < displs.length; i++)
-				collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[i - 1], displs[i])));
-			collected.add(new BigInteger(Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
+				result.add(new BigInteger(
+						Arrays.copyOfRange(recvbuf, displs[i - 1], displs[i])));
+			
+			result.add(new BigInteger(
+					Arrays.copyOfRange(recvbuf, displs[displs.length - 1], recvbuf.length)));
 		}
 			
-		return collected;
+		return result;
 	}
 	
 	/************************************************************
