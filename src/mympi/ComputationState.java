@@ -586,11 +586,14 @@ abstract class ComputationState implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder("State-");
-		result.append(getRank());
-		result.append("\nCalculating: |A(");
+		StringBuilder result = new StringBuilder("State:");
+		result.append("\nComputation of |A(");
 		result.append(getOrder());
 		result.append(")|");
+		result.append("\non node ");
+		result.append(getRank());
+		result.append(" of ");
+		result.append(getNumberOfNodes());
 		result.append("\nSize Equivalence Classes: ");
 		if(getEquivalenceClasses() != null)
 			result.append(getEquivalenceClasses().size());
