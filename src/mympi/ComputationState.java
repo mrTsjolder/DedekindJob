@@ -41,7 +41,6 @@ import amfsmall.AntiChain;
  * when the JVM crashes due to native errors or power loss.
  * </p>
  * 
- * @version 1.2
  * @author Pieter-Jan Hoedt
  *
  */
@@ -49,9 +48,9 @@ abstract class ComputationState implements Serializable {
 
 	/** Identification number needed for serialisation. */
 	private static final long serialVersionUID = 4547438662143346534L;
-	/** string to be formatted with 2 integers 
+	/** string to be formatted with 3 integers 
 	 * to form a filename for files storing a state object */
-	private static final String FILENAME_FORMAT = "Dedekind%d-State%d.ser";
+	private static final String FILENAME_FORMAT = "Dedekind%d-State(%d/%d).ser";
 	
 	private final int rank;
 	private final int numberOfNodes;
@@ -75,19 +74,20 @@ abstract class ComputationState implements Serializable {
 	 * @param 	order
 	 *       	The order of the Dedekind number being computed
 	 * 
-	 * @throws 	IllegalArgumentException if {@code rank < 0}
+	 * @throws 	IllegalArgumentException if {@code order < 3}
 	 */
 	protected ComputationState(int rank, int nrOfNodes, int order) 
 			throws IllegalArgumentException {
-		if(rank < 0)
-			throw new IllegalArgumentException("identifier must be positive");
+		if(order < 3)
+			throw new IllegalArgumentException("for n < 3, there is no challenge");
 		this.rank = rank;
 		this.numberOfNodes = nrOfNodes;
 		this.order = order;
 	}
 	
 	/**
-	 * Initialize this state object by copying all fields but the counter.
+	 * Initialize this state object by copying all fields but the counter 
+	 * from a previous state.
 	 * 
 	 * @param 	previous 
 	 *       	The previous state the computation was in.
@@ -99,7 +99,7 @@ abstract class ComputationState implements Serializable {
 	 * @see   	#ComputationState(int, int, int)
 	 */
 	protected ComputationState(ComputationState previous) 
-			throws NullPointerException, IllegalArgumentException, IllegalStateException {
+			throws NullPointerException, IllegalArgumentException {
 		this(previous.getRank(), previous.getNumberOfNodes(), previous.getOrder());
 		setEquivalenceClasses(previous.getEquivalenceClasses());
 		setLeftIntervalSizes(previous.getLeftIntervalSizes());
@@ -310,7 +310,7 @@ abstract class ComputationState implements Serializable {
 	 * Add all equivalence classes from a given map to the (mu,nu,eta) 
 	 * equivalence classes computed thus far. This method has the same result as: 
 	 * <pre>
-	 * {@code for(Entry<MNECode, Long> entry : toBeAdded)
+	 * {@code for(Entry<MNECode, Long> entry : toBeAdded.entrySet())
 	 *     addToMunuetaEquivalenceClass(entry.getKey(), entry.getValue());}
 	 * </pre>
 	 * 
@@ -422,7 +422,7 @@ abstract class ComputationState implements Serializable {
 	 * @see #getFilePath(int, int)
 	 */
 	private Path getPath() {
-		return ComputationState.getFilePath(getOrder(), getRank());
+		return ComputationState.getFilePath(getOrder(), getRank(), getNumberOfNodes());
 	}
 	
 	/******************************************************************
@@ -435,7 +435,7 @@ abstract class ComputationState implements Serializable {
 	 * 
 	 * @return the {@code Path} to the directory
 	 * 
-	 * @see #getFilePath(int, int)
+	 * @see #getFilePath(int, int, int)
 	 */
 	public static Path getDirectoryPath() {
 		String directory = "states";
@@ -444,20 +444,24 @@ abstract class ComputationState implements Serializable {
 	
 	/**
 	 * Get the path to the file where the state for the computation of
-	 * a given Dedekind number with a given identifier should be stored.
+	 * a given Dedekind number with a certain mpi-configuration should be stored.
 	 * NOTE that the file indicated by this path might not exist.
 	 * 
 	 * @param 	order
 	 *       	The order of the Dedekind number that the state was computing
-	 * @param 	id
-	 *       	The identifier of the state
-	 * @return	the {@code Path} to the file storing the state with id {@code id} 
+	 * @param 	rank
+	 *       	The rank of the node which was in that state
+	 * @param	nrOfNodes
+	 *       	The number of nodes used for computation
+	 * @return	the {@code Path} to the file storing the state
 	 *        	for computation of Dedekind number {@code order}
+	 *        	as calculated on a node with rank {@code rank}
+	 *        	in an environment with {@code nrOfNodes} nodes
 	 * 
 	 * @see #getDirectoryPath()
 	 */
-	public static Path getFilePath(int order, int id) {
-		String file = String.format(ComputationState.FILENAME_FORMAT, order, id);
+	public static Path getFilePath(int order, int rank, int nrOfNodes) {
+		String file = String.format(ComputationState.FILENAME_FORMAT, order, rank, nrOfNodes);
 		return ComputationState.getDirectoryPath().resolve(file);
 	}
 	
@@ -470,7 +474,7 @@ abstract class ComputationState implements Serializable {
 	 *        	if the file stores a valid state, 
 	 *        	{@code null} otherwise
 	 * 
-	 * @see #getFilePath(int, int)
+	 * @see #getFilePath(int, int, int)
 	 */
 	private static ComputationState recoverState(Path path) {
 		try(InputStream is = Files.newInputStream(path);
@@ -487,18 +491,21 @@ abstract class ComputationState implements Serializable {
 	 * with the given identifier, from the file it should be stored in.
 	 * 
 	 * @param 	order 
-	 *       	The order of the Dedekind number that the state was computing 
-	 * @param 	id
-	 *       	The identifier of the state
+	 *       	The order of the Dedekind number that the state was computing
+	 * @param 	rank
+	 *       	The rank of the node which was in that state
+	 * @param	nrOfNodes
+	 *       	The number of nodes used for computation
 	 * @return	the {@code ComputationState} with id {@code id} 
 	 *        	for computation of Dedekind number {@code order}
 	 *        	if this state is stored in the correct file,
 	 *        	{@code null} otherwise
 	 * 
 	 * @see #recoverState(Path)
+	 * @see #store()
 	 */
-	public static ComputationState recoverState(int order, int id) {
-		return ComputationState.recoverState(ComputationState.getFilePath(order, id));
+	public static ComputationState recoverState(int order, int rank, int nrOfNodes) {
+		return ComputationState.recoverState(ComputationState.getFilePath(order, rank, nrOfNodes));
 	}
 	
 	/**
@@ -508,23 +515,25 @@ abstract class ComputationState implements Serializable {
 	 * @param 	order 
 	 *       	The order of the Dedekind number that the state was computing
 	 * @param 	from
-	 *       	The lowest identifier of a state
+	 *       	The lowest rank to find a state for
 	 * @param 	to
-	 *       	The highest identifier of a state
+	 *       	The highest rank to find a state for
+	 * @param	nrOfNodes
+	 *       	The number of nodes used for computation
 	 * @return	A collection containing all states computing Dedekind number 
 	 *        	{@code order} with an identifier in {@code [from, to]} 
 	 *        	omitting states that were not stored (correctly)
 	 * @throws 	IllegalArgumentException if {@code to < from}
 	 * 
-	 * @see #recoverState(int, int)
+	 * @see #recoverState(int, int, int)
 	 */
-	public static Collection<ComputationState> recoverStates(int order, int from, int to) 
+	public static Collection<ComputationState> recoverStates(int order, int from, int to, int nrOfNodes) 
 			throws IllegalArgumentException {
 		Collection<ComputationState> result = new ArrayList<>(to - from);
 		ComputationState state;
 		
 		for(int i = from; i < to; i++) {
-			state = ComputationState.recoverState(order, i);
+			state = ComputationState.recoverState(order, i, nrOfNodes);
 			if(state != null)
 				result.add(state);
 		}
@@ -534,24 +543,27 @@ abstract class ComputationState implements Serializable {
 	
 	/**
 	 * Recover all states for the computation of a given Dedekind number
-	 * with an identifier in a given interval, from the files they should be stored in.
+	 * with a certain amount of nodes from the files they should be stored in.
 	 * 
 	 * @param 	order 
 	 *       	The order of the Dedekind number that the state was computing
+	 * @param	nrOfNodes
+	 *       	The number of nodes used for computation
 	 * @return	A collection containing all states computing Dedekind number 
 	 *        	{@code order} that were stored correctly (might be empty)
 	 * 
 	 * @since Java 8
 	 * 
-	 * @see #store()
-	 * @see #recoverState(int, int)
+	 * @see #recoverState(int, int, int)
 	 * @see #recoverState(Path)
+	 * @see #store()
 	 */
-	public static Collection<ComputationState> recoverAllStates(int order) {
+	public static Collection<ComputationState> recoverAllStates(int order, int nrOfNodes) {
 		Collection<ComputationState> result = new ArrayList<>();
 		String regex = ComputationState.FILENAME_FORMAT
 				.replaceFirst("%d", String.valueOf(order))
-				.replaceFirst("%d", "\\.");
+				.replaceFirst("%d", "\\.")
+				.replaceFirst("%d", String.valueOf(nrOfNodes));
 		
 		try {
 			result = Files.walk(getDirectoryPath())
@@ -606,30 +618,31 @@ abstract class ComputationState implements Serializable {
 	 *       	the {@code -h} flag prints the help section.
 	 */
 	public static void main(String[] args) {
-		int order = -1, id = -1;
+		int order = 3, rank = -1, nrOfNodes = 4;
 		ArrayList<ComputationState> states = new ArrayList<>();
 		
 		for (int i = 0; i < args.length; i++) {
 			String a = args[i];
 			switch (a) {
-				case "-n" : order = Integer.valueOf(args[i+1]); i++; break;
-				case "-id" : id = Integer.valueOf(args[i+1]);i++; break;
-				case "-f" : states.add(recoverState(Paths.get(args[i+1])));i++;break;
-				case "-h" : System.out.println("parameters -n -id -f -h\n"
-						+ "-n number : show all states for computation |A(number)|\n"
-						+ "-id identifier : show state with specified identifier\n"
-						+ "                 needs to be used together with -n flag!\n"
-						+ "-f file : show state stored in file\n"
+				case "-n" : order = Integer.valueOf(args[++i]); break;
+				case "-s" : nrOfNodes = Integer.valueOf(args[++i]); break;
+				case "-r" : rank = Integer.valueOf(args[++i]); break;
+				case "-f" : states.add(recoverState(Paths.get(args[++i])));break;
+				case "-h" : System.out.println("parameters -n -s -r -f -h\n"
+						+ "-n number : show states for computation of |A(number)| (default: 3)\n"
+						+ "-s nrOfNodes : specify the number of nodes that were used for computation(default: 4)\n"
+						+ "-r rank : specify the rank of the node that was computing\n"
+						+ "-f file : show state stored in file (multiple -f flags possible)\n"
 						+ "-h : this text");return;
 				default : System.out.println("Ignored " + a);break;
 			}
 		}
 		
-		if(states.isEmpty() && order > -1) {
-			if(id < 0)
-				states.addAll(recoverAllStates(order));
+		if(states.isEmpty() && order > 2 && nrOfNodes > 0) {
+			if(rank < 0)
+				states.addAll(recoverAllStates(order, nrOfNodes));
 			else
-				states.add(recoverState(order, id));
+				states.add(recoverState(order, rank, nrOfNodes));
 		}
 		
 		for(ComputationState state : states) {
