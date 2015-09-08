@@ -367,12 +367,48 @@ abstract class ComputationState implements Serializable {
 	 * algorithm methods                                              *
 	 ******************************************************************/
 
+	/**
+	 * Compute the equivalence classes with a given algorithm
+	 * 
+	 * @param 	algo 
+	 *       	The algorithm to compute the equivalence classes with
+	 * @return	the computed equivalence classes
+	 * 
+	 * @see ThirdOrderAlgorithm#computeEquivalenceClasses()
+	 */
 	abstract Map<AntiChain, Long> computeEquivalenceClasses(ThirdOrderAlgorithm algo);
 
+	/**
+	 * Compute the left interval sizes with a given algorithm
+	 * 
+	 * @param 	algo 
+	 *       	The algorithm to compute the left interval sizes with
+	 * @return	the computed left interval sizes
+	 * 
+	 * @see ThirdOrderAlgorithm#computeLeftIntervalSizes()
+	 */
 	abstract Map<AntiChain, Long> computeLeftIntervalSizes(ThirdOrderAlgorithm algo);
 
+	/**
+	 * Compute the (mu,nu,eta) equivalence classes with a given algorithm
+	 * 
+	 * @param 	algo 
+	 *       	The algorithm to compute the (mu,nu,eta) equivalence classes with
+	 * @return	the computed (mu,nu,eta) equivalence classes
+	 * 
+	 * @see ThirdOrderAlgorithm#computeMunuetaEquivalenceClasses()
+	 */
 	abstract Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo);
 
+	/**
+	 * Compute the sum with a given algorithm
+	 * 
+	 * @param 	algo 
+	 *       	The algorithm to compute the sum with
+	 * @return	the computed sum
+	 * 
+	 * @see ThirdOrderAlgorithm#computeSum()
+	 */
 	abstract BigInteger computeSum(ThirdOrderAlgorithm algo);
 	
 	/******************************************************************
