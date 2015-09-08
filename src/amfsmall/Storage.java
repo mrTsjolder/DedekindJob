@@ -19,17 +19,6 @@ public class Storage {
 		s.put(v, s.get(v) + coeff);
 	}
 
-	public static <T extends Comparable<T>> String toString(SortedMap<T, Long> list, Formatter<T> f) {
-		int count = 0;
-		String res = "";
-		for (T v : list.keySet()) {
-			if (count++ % f.getNumberOfItemsPerLine() == 0) res += String.format("\n%10d:", count);
-			res += String.format(f.getFormatString(), "+" + list.get(v) + "*" + f.toString(v));
-		}
-		res += String.format("\n%10d:", count) + " ____________";
-		return res;
-	}
-
 	public static <T extends Comparable<T>> void store(SortedMap<T, Long> list,
 			SortedMap<T, Long> smallList) {
 		for (T t : smallList.keySet()) store(list,t,smallList.get(t));

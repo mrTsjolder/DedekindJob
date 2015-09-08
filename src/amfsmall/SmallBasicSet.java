@@ -1,6 +1,5 @@
 package amfsmall;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
@@ -332,44 +331,6 @@ public class SmallBasicSet implements Iterable<Integer>, Comparable<SmallBasicSe
 		};
 //		return getSet().iterator();
 
-	}
-
-	public static Parser<SmallBasicSet> parser() {
-		return new Parser<SmallBasicSet>() {
-
-			
-			@Override
-			public SmallBasicSet parse(String r) throws SyntaxErrorException {
-				long res = 0L;
-				String s = r;
-				r = Parser.removeSpaces(r);
-				int opening = r.indexOf('[');
-				if (opening != 0) {
-					// string representation, elements are represented by characters satisfying isAccepatableCharElement
-					if (r.charAt(0) == '0') return emptySet();
-					else if (isAcceptableCharElement(r.charAt(0))) {
-						SmallBasicSet ret = emptySet();
-						int p = 0;
-						do {
-							ret = ret.add(toIntegerElement(r.charAt(p++)));
-						}
-						while (p < r.length() && isAcceptableCharElement(r.charAt(p)));
-						return ret;
-					}
-				}
-				// if not succeeded, try BasicSet parser
-				BasicSet aSet = BasicSet.parser().parse(s);
-				for (int i:aSet) res |= getBit(i);
-				return new SmallBasicSet(res);
-			}
-
-			@Override
-			public boolean makesSense(String input) {
-				return BasicSet.parser().makesSense(input)
-				;
-			}
-			
-		};
 	}
 
 	/**

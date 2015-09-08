@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import auxiliary.Pair;
@@ -75,70 +74,7 @@ public class AntiChain extends TreeSet<SmallBasicSet> implements Comparable<Anti
 	public AntiChain() {
 		super();
 	}
-	
-	public static Parser<AntiChain> parser() {
-		return new Parser<AntiChain>() {
 
-			
-			@Override
-			public AntiChain parse(String S) throws SyntaxErrorException {
-
-				return AntiChain.parse(S);
-			}
-
-			@Override
-			public boolean makesSense(String input) {
-				try {
-					AntiChain.parse(input);
-				}
-				catch (SyntaxErrorException e) {
-					return false;
-				}
-				return true;
-			}
-			
-		};
-	}
-	/**
-	 * parsing function
-	 * inverse of toString
-	 * @param r
-	 * @return the function described by r
-	 * throws SyntaxErrorException must be thrown if no object can be returned
-	 */
-	private static AntiChain parse(String r) throws SyntaxErrorException {
-		r = Parser.removeSpaces(r);
-		int universeBracket = r.indexOf('[');
-		SmallBasicSet universe = SmallBasicSet.universe(); // standard universe
-		if (universeBracket == 0) { // syntax "[...]{[.."
-			universe = SmallBasicSet.parser().parse(r);
-			r = r.substring(r.indexOf(']') + 1);
-		}
-		int opening = r.indexOf('{');
-		int closure = r.indexOf('}');
-		if (opening != 0) throw new SyntaxErrorException("AntiChain parsing \"" + r + "\": No introducing '{' found");
-		if (closure == -1) throw new SyntaxErrorException("AntiChain parse error \"" + r + "\": No closing '}' found");
-		AntiChain amf = new AntiChain(universe);
-		r = r.substring(opening + 1, closure).trim();
-		if (r.isEmpty()) return amf;
-		boolean longNotation = r.indexOf(']') >= 0;
-		while (!r.isEmpty()) {
-			try {
-				amf.addConditionally(SmallBasicSet.parser().parse(r));
-			} catch (SyntaxErrorException e) {
-				throw new SyntaxErrorException("AntiChain parsing \"" 
-						+ r + "\": No SmallBasicSet found\n(" + e + ")");
-			}
-			if (longNotation) r = r.substring(r.indexOf(']') + 1).trim();
-			else {
-				int comma = r.indexOf(',');
-				if (comma >= 0) r = r.substring(comma);
-				else r = "";
-			}
-			if (!r.isEmpty()) r = r.substring(1).trim();		
-		}
-		return amf;
-	}
 
 	public static boolean isAntiMonotonic(Collection<SmallBasicSet> C) {
 		for (SmallBasicSet A : C)
@@ -452,27 +388,6 @@ public class AntiChain extends TreeSet<SmallBasicSet> implements Comparable<Anti
 	}
 	
 	/**
-	 * find the maximal BitRepresentation of a representative with l as largest element
-	 * equivalent to
-	 * this antimonotonic function
-	 * under the given set of permutation of the elements
-	 * @param permutations the invariants group
-	 * @param l the largest element in the representation
-	 * @return the smallest BitRepresentation in the equivalenceclass
-	 */
-	public BitRepresentation standardBitRepresentation(Set<int[]> permutations, int l) {
-		BitRepresentation bestCode = new BitRepresentation(this,l);
-		for (int[] p : permutations) {
-			AntiChain kand = this.map(p);
-			BitRepresentation code = new BitRepresentation(kand,l);
-			if (code.compareTo(bestCode) > 0) {
-				bestCode = code;
-			}
-		}
-		return bestCode;	
-	}
-	
-	/**
 	 * find the symmetry group of this amf 
 	 * this is the set of permutations of the elements under which this amf is invariant
 	 * @return 
@@ -694,63 +609,6 @@ public class AntiChain extends TreeSet<SmallBasicSet> implements Comparable<Anti
 	public boolean equals(LatticeElement e) {
 		return equals((AntiChain) e);
 	}
-	
-	/**
-	 * iterates over all subsets of the AMF
-	 * @return
-	 */
-	public Iterator<AntiChain> subSetsIterator() {
-		return new Iterator<AntiChain>() {
-
-			SmallBasicSet[] wC;
-			AntiChain nxt;
-			boolean picked[];
-			int active;
-			boolean ready;
-			
-			{
-				wC = new SmallBasicSet[AntiChain.this.size()];
-				wC = AntiChain.this.toArray(wC);
-				active = wC.length; // number of sets in nxt, 
-				// except in the beginning when it does not make a difference
-				nxt = new AntiChain();
-				picked = new boolean[wC.length];
-				for (int i=0;i<picked.length;i++) picked[i] = true; // no set selected in next nxt
-				ready = false;
-			}
-			
-			@Override
-			public boolean hasNext() {
-				return !ready || active < wC.length;
-			}
-
-			@Override
-			public AntiChain next() {
-				for (int i=0;i<wC.length;i++) {
-					if (picked[i]) {
-						nxt.remove(wC[i]);
-						picked[i] = false;
-						active--;
-					}
-					else {
-						nxt.add(wC[i]);
-						picked[i] = true;
-						active++;
-						break;
-					}
-				}
-				ready = true;
-				return nxt;
-			}
-
-			@Override
-			public void remove() {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		};
-	}
 
 	private static AntiChain emptySetFunction;
 	static {
@@ -848,49 +706,6 @@ public class AntiChain extends TreeSet<SmallBasicSet> implements Comparable<Anti
 		a1.removeAll(ret[0]);
 		ret[1] = a1.project(p);
 		return ret;
-	}
-
-
-	/**
-	 * For this >= beta, find the connected components in the connectednessgraph of this with respect to beta
-	 * the connectedness graph is defined by {A.intersect(B)} <= beta
-	 * for !(this >= beta), the only connected component is alpha
-	 * @param beta
-	 * @return set of maximal amf's xi, pairwise satisfying xi.meet(xj).le beta
-	 */
-	public SortedSet<AntiChain> decompose(AntiChain beta) {
-		if (!ge(beta)) {
-			SortedSet<AntiChain> res = new TreeSet<AntiChain>();
-			res.add(this);
-			return res;
-		}
-		if (isEmpty()) {
-			SortedSet<AntiChain> res = new TreeSet<AntiChain>();
-			res.add(this);
-			return res;
-		}
-		SortedSet<SmallBasicSet> alfac = new TreeSet<SmallBasicSet>(this);
-		SortedSet<AntiChain> res = new TreeSet<AntiChain>();
-		while (!alfac.isEmpty()) {
-			SmallBasicSet a = alfac.first();
-			AntiChain building = AntiChain.oneSetFunction(a);
-			alfac.remove(a);
-			boolean done;
-			do {
-				done = true;
-				Iterator<SmallBasicSet> it = alfac.iterator();
-				while (it.hasNext()) {
-					SmallBasicSet b = it.next();
-					if (!building.meet(AntiChain.oneSetFunction(b)).le(beta)) {
-						building.addConditionally(b);
-						it.remove();
-						done = false;
-					}
-				}
-			} while (!done);
-			res.add(building);
-		}
-		return res;
 	}
 
 	@Override

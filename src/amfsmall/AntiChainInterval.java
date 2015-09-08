@@ -4,14 +4,9 @@
 package amfsmall;
 
 import java.math.BigInteger;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import posets.SetsPoset;
 
@@ -506,71 +501,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		res[1] = span.minus(best);
 		return res;
 	}
-	
-	/**
-	 * list all elements of this interval in a string
-	 * @return the list of elements as a string
-	 */
-	public String expand() {
-		String res = "";
-		for (AntiChain amf : this) res += amf;
-		return res;
-	}
-	
-	/**
-	 * the lattice of the sources in this interval is isomorphic with the lattice of subsets
-	 * @return list of subsets
-	 */
-	public TreeSet<SmallBasicSet> getSources() {
-		TreeSet<SmallBasicSet> res = new TreeSet<SmallBasicSet>();
-		for (SmallBasicSet t : getTop()) {
-			res.addAll(t.getSubSets());
-			}
-		for (SmallBasicSet b: getBottom()) {
-			res.removeAll(b.getSubSets());
-		}
-		return res;
-	}
-	
-	/**
-	 * the lattice of the sources in this interval is isomorphic with the lattice of subsets
-	 * @return list of subsets
-	 */
-	public TreeMap<Long,TreeSet<SmallBasicSet>> getSourcesRanked() {
-		TreeSet<SmallBasicSet> theSet = getSources();
-		TreeMap<Long,TreeSet<SmallBasicSet>> res = new TreeMap<Long, TreeSet<SmallBasicSet>>();
-		for (SmallBasicSet t : theSet) {
-			if (!res.containsKey(t.size())) {
-				res.put(t.size(),new TreeSet<SmallBasicSet>());
-			}
-			res.get(t.size()).add(t);
-		}
-		return res;
-	}
-	
-	/**
-	 * count the number of elements in this interval
-	 * @return the number of elements in this interval
-	 */
-	public long countedSize() {
-		long res = 0;
-		for (AntiChain amf: this) res ++;
-		return res;
-	}
-	
-	/**
-	 * Compute the size of the interval as the product of its direct join components
-	 * or as the product of its dual direct join components whichever has more components
-	 * @return
-	 */
-	public long size() {
-		long res = 1;
-		SortedSet<AntiChainInterval> dec = this.decompose();
-		SortedSet<AntiChainInterval> decd = this.decomposeDual();
-		if (decd.size() > dec.size()) dec = decd;
-		for (AntiChainInterval b : decd) res *= b.latticeSize();
-		return res;
-	}
 
 	/**
 	 * interface to compute a suitable subset for splitting
@@ -632,64 +562,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 			return best;
 		}
 	};
-	
-	/**
-	 * mu(tau,alfa) is the largest AMF within the interval for which
-	 *        mu.meet(alfa) intersection alfa == tau 
-	 * @pre tau is a subset of alfa
-	 * @pre alfa is in the interval
-	 * @per tau is in the interval
-	 * @param tau
-	 * @param alfa
-	 * @return mu(tau,alfa)
-	 */
-	public AntiChain mu(AntiChain tau, AntiChain alfa) {
-		AntiChain fC = alfa.minus(tau);
-		AntiChain res = new AntiChain(getTop());
-		AntiChain resR = new AntiChain();
-		for (SmallBasicSet s : fC) {
-			for (SmallBasicSet t : res) {
-				if (t.hasAsSubset(s)) {
-					for (int i : s) {
-						if (!getBottom().ge(t.minus(i))) {
-							resR.addConditionally(t.minus(i));
-						}
-					}
-				}
-				else {
-					resR.addConditionally(t);
-				}
-			}
-			AntiChain h = res;
-			res = resR;
-			resR = h;
-			resR.clear();
-		}
-		res = res.join(getBottom());
-		return res;
-	}
-	
-	/**
-	 * phi(tau, alfa) is the interval of elements chi in this satisfying
-	 *        (chi.meet(alfa)).intersection(alfa).equals( tau)
-	 * @pre alfa is in the interval
-	 * @pre tau is in the interval
-	 * @param tau
-	 * @param alfa
-	 * @return [tau.join(getBottom()), mu(tau,alfa)]
-	 */
-	public AntiChainInterval phi(AntiChain tau, AntiChain alfa) {
-		AntiChain bottom = new AntiChain(tau).join(getBottom());
-		return new AntiChainInterval(bottom, mu(tau,alfa));
-	}
-
-	/*
-	 * return the dual of this interval in the smallest lattice it is contained in
-	 */
-	public AntiChainInterval dual() {
-		SmallBasicSet span = getBottom().sp().union(getTop().sp());
-		return new AntiChainInterval(getTop().dual(span),getBottom().dual(span));
-	}
 
 	/**
 	 * Computes a naive standard of this interval in space of dimension n
@@ -707,110 +579,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		for (SmallBasicSet s : chik) // (n n/2)
 			if (s.contains(n+1)) a.add(s.minus(n+1));
 		return new AntiChainInterval(a,b);
-	}
-
-	/**
-	 * compute the symmetry group of the the interval
-	 * this is the set of symmetries that leave both top and bottom invariant
-	 * @return getTop().symmetryGroup().intersection(getBottom().symmetryGroup())
-	 */
-	public Set<int[]> symmetryGroup() {
-		Set<int[]> symmetries = getTop().symmetryGroup();
-		Set<int[]> toBeRemoved = new HashSet<int[]>();
-		for (int[] s : symmetries) {
-			if (!getBottom().map(s).equals(getBottom())) toBeRemoved.add(s);
-		}
-		symmetries.removeAll(toBeRemoved);
-		return symmetries;
-	}
-	/**
-	 * compute the symmetry group of the the interval
-	 * this is the set of symmetries that leave both top and bottom invariant
-	 * and are present in symm
-	 * @return getTop().symmetryGroup().intersection(getBottom().symmetryGroup())
-	 */
-	public Set<int[]> symmetryGroup(Set<int[]> symm) {
-		Set<int[]> symmetries = getTop().symmetryGroup(symm);
-		Set<int[]> toBeRemoved = new HashSet<int[]>();
-		for (int[] s : symmetries) {
-			if (!getBottom().map(s).equals(getBottom())) toBeRemoved.add(s);
-		}
-		symmetries.removeAll(toBeRemoved);
-		return symmetries;
-	}
-
-	/**
-	 * classify all amf in the interval according to the symmetries in top and bottom
-	 * that are also given in symm
-	 * @return a sorted map with the encoding of the representative and the number of elements in the equivalence class.
-	 */
-	public SortedMap<BigInteger, Long> getEquivalenceClasses(Set<int[]> symm) {
-		Set<int[]> symmetries = this.symmetryGroup(symm);
-		TreeMap<BigInteger, Long> res = new TreeMap<BigInteger,Long>();
-		for (AntiChain f : this) {
-			 Storage.store(res,f.standard(symmetries).encode());
-		}
-		return res;
-	}
-	/**
-	 * classify all amf in the interval according to the symmetries  in top and bottom
-	 * that are also in symm
-	 * representatives of the classes are minimal wrt bitrepresentation
-	 * @return a sorted map with the bitrepresentation of the representative  (largest element is largest element in top)
-	 * and the number of elements in the equivalence class.
-	 */
-	public SortedMap<BitRepresentation, Long> getEquivalenceClassesBitRepresentation(
-			Set<int[]> symm) {
-		Set<int[]> symmetries = this.symmetryGroup(symm);
-		int l = getTop().sp().maximum();
-		TreeMap<BitRepresentation, Long> res = new TreeMap<BitRepresentation,Long>();
-		for (AntiChain f : this) {
-			 Storage.store(res,f.standardBitRepresentation(symmetries,l));
-		}
-		return res;
-	}
-
-	/**
-	 * classify all amf in the interval according to the symmetries in top and bottom
-	 * representatives of the classes are minimal wrt bitrepresentation
-	 * @return a sorted map with the bitrepresentation of the representative (largest element is largest element in top)
-	 * and the number of elements in the equivalence class.
-	 */
-	public SortedMap<BitRepresentation, Long> getEquivalenceClassesBitRepresentation() {
-		Set<int[]> symmetries = this.symmetryGroup();
-		int l = getTop().sp().maximum();
-		TreeMap<BitRepresentation, Long> res = new TreeMap<BitRepresentation,Long>();
-		for (AntiChain f : this) {
-			 Storage.store(res,f.standardBitRepresentation(symmetries,l));
-		}
-		return res;
-	}
-	/**
-	 * compute the equivalenceclasses of elements in this interval as AntiChain. 
-	 * The representatives are minimal in the bitrepresentation
-	 * @return a sortedset of AntiChain
-	 */
-	public SortedMap<AntiChain, Long> getEquivalenceClassesAMF() {
-		SortedMap<BitRepresentation, Long> bitEquiv = this.getEquivalenceClassesBitRepresentation();
-		SortedMap<AntiChain, Long> ret = new TreeMap<AntiChain, Long>();
-		for (BitRepresentation b : bitEquiv.keySet()) {
-			ret.put(b.toAntiChain(), bitEquiv.get(b));
-		}
-		return ret;
-	}
-
-	/**
-	 * compute the equivalenceclasses wrt the symmetry of elements in this interval as AntiChain. 
-	 * The representatives are minimal in the bitrepresentation
-	 * @return a sortedset of AntiChain
-	 */
-	public SortedMap<AntiChain, Long> getEquivalenceClassesAMF(Set<int[]> symm) {
-		SortedMap<BitRepresentation, Long> bitEquiv = this.getEquivalenceClassesBitRepresentation(symm);
-		SortedMap<AntiChain, Long> ret = new TreeMap<AntiChain, Long>();
-		for (BitRepresentation b : bitEquiv.keySet()) {
-			ret.put(b.toAntiChain(), bitEquiv.get(b));
-		}
-		return ret;
 	}
 
 	/**
@@ -1078,36 +846,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 				
 			};
 		}
-	}
-	
-	/**
-	 * if the interval is not empty, find the maximal set of intervals {Ii|i=1..k} such that
-	 * I1 dv I2 dv ... dv Ik = this
-	 * with dv the direct join
-	 * if the interval is empty, return the interval
-	 * @param beta
-	 * @return the maximal set of intervals allowing a decomposition of this through direct join
-	 */
-	public SortedSet<AntiChainInterval> decompose() {
-		AntiChain bottom = this.getBottom();
-		AntiChain top = this.getTop();
-		if (!bottom.le(top)) {
-			SortedSet<AntiChainInterval> res = new TreeSet<AntiChainInterval>();
-			res.add(this);
-			return res;
-		}
-		
-		SortedSet<AntiChain> alfac = top.decompose(bottom);
-		SortedSet<AntiChainInterval> res = new TreeSet<AntiChainInterval>();
-		for (AntiChain x : alfac) {
-			res.add(new AntiChainInterval(bottom.meet(x),x));
-		}
-		return res;
-	}
-	
-	public SortedSet<AntiChainInterval> decomposeDual() {
-		AntiChainInterval dual = this.dual();
-		return dual.decompose();
 	}
 
 	@Override
