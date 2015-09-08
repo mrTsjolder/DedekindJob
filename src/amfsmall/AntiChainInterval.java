@@ -641,6 +641,7 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 			private AntiChain[] alfaTop = interval.getTop().reduce(span);
 
 			private AntiChain[] alfa = new AntiChain[2];
+			@SuppressWarnings("unchecked")
 			private Iterator<AntiChain>[] iterator = new Iterator[2];
 			{ 
 				iterator[0] = new AntiChainInterval(alfaBottom[0],alfaTop[0]).fastIterator();
@@ -764,6 +765,7 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 			private AntiChain[] alfaTop = interval.getTop().reduce(span);
 
 			private AntiChain[] alfa = new AntiChain[2];
+			@SuppressWarnings("unchecked")
 			private Iterator<AntiChain>[] iterator = new Iterator[2];
 			{ 
 				AntiChain[] alfaFrom = from.reduce(span);

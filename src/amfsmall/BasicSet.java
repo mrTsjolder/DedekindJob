@@ -2,7 +2,6 @@ package amfsmall;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Sets of integers to be used as the base elements in the space of antimonotonic functions
@@ -22,27 +21,6 @@ public class BasicSet implements Iterable<Integer> {
 	
 	private BasicSet() {
 		theSet = new HashSet<Integer>();
-	}
-
-	/**
-	 * pick one element at random from this set
-	 * throws an NoSuchElementException if the set is empty
-	 * @param sup
-	 */
-	public int getOneFrom() throws NoSuchElementException {
-		if (isEmpty()) throw new NoSuchElementException();
-		Integer[] array = new Integer[theSet.size()];
-		theSet.toArray(array);
-		double index = (float) Math.random()*theSet.size();
-		return array[(int) Math.floor(index)];
-	}
-	
-	/**
-	 * checks whether this set has any elements
-	 * @return the set has no elements
-	 */
-	private boolean isEmpty() {
-		return theSet.isEmpty();
 	}
 
 	/**

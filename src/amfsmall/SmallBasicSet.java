@@ -1,10 +1,7 @@
 package amfsmall;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.TreeSet;
-
-// import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Sets of integers to be used as the base elements in the space of antimonotonic functions
@@ -132,19 +129,6 @@ public class SmallBasicSet implements Iterable<Integer>, Comparable<SmallBasicSe
 	 */
 	public boolean hasAsSubset(SmallBasicSet b) {
 		return (theSet | b.theSet) == theSet;
-	}
-
-	/**
-	 * pick one element at random from this set
-	 * throws an NoSuchElementException if the set is empty
-	 * @param sup
-	 */
-	public int getOneFrom() throws NoSuchElementException {
-		return getSet().getOneFrom();
-	}
-	
-	private BasicSet getSet() {
-		return getSet(theSet);
 	}
 
 	/**

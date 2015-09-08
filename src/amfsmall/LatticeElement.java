@@ -1,8 +1,7 @@
 package amfsmall;
 
-import java.util.ArrayList;
-
 public interface LatticeElement {
+	
 	public LatticeElement join(LatticeElement e);
 	public LatticeElement meet(LatticeElement e);
 	public LatticeElement times(LatticeElement e);
