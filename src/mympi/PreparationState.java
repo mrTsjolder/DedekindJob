@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.util.Map;
 
 import amfsmall.AntiChain;
-import step3.MuNuEta.MNECode;
 
 class PreparationState extends ComputationState {
 
@@ -45,7 +44,7 @@ class PreparationState extends ComputationState {
 	}
 	
 	@Override
-	Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
+	Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
 		long start = System.currentTimeMillis();
 		algo.computeMunuetaEquivalenceClasses();
 		addTiming("munueta equivalence classes", System.currentTimeMillis() - start);
@@ -79,7 +78,7 @@ class PreparationState extends ComputationState {
 		in.defaultReadObject();
 		setEquivalenceClasses((Map<AntiChain, Long>) in.readObject());
 		setLeftIntervalSizes((Map<AntiChain, Long>) in.readObject());
-		setMunuetaEquivalenceClasses((Map<MNECode, Long>) in.readObject());
+		setMunuetaEquivalenceClasses((Map<BigInteger, Long>) in.readObject());
 		// turn back counter with one, because the last iteration failed
 		setCounter(in.readInt() - 1);
 	}

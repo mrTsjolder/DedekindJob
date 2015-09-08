@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Map;
 
-import step3.MuNuEta.MNECode;
 import amfsmall.AntiChain;
 
 /**
@@ -61,7 +60,7 @@ class InitState extends ComputationState {
 	}
 
 	@Override
-	Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) 
+	Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) 
 			throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("Not useful in this state");
 	}

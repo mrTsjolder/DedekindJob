@@ -26,7 +26,6 @@ import amfsmall.SmallBasicSet;
 import mpi.MPI;
 import mpi.MPIException;
 import step3.MuNuEta;
-import step3.MuNuEta.MNECode;
 
 /**
  * A class representing 1 node in a HPC environment 
@@ -207,7 +206,7 @@ public class ThirdOrderAlgorithm {
 	}
 
 	/** @return the (mu,nu,eta) equivalence classes computed thus far */
-	public Map<MNECode, Long> getMunuetaEquivalenceClasses() {
+	public Map<BigInteger, Long> getMunuetaEquivalenceClasses() {
 		return getCurrentState().getMunuetaEquivalenceClasses() == null ?
 				Collections.emptyMap() : getCurrentState().getMunuetaEquivalenceClasses();
 	}
@@ -259,8 +258,6 @@ public class ThirdOrderAlgorithm {
 
 		return getEquivalenceClasses();
 	}
-	
-	//TODO: exceptions when computations can corrupt the current state??? (It might not be possible!!!)
 
 	/**
 	 * Compute the left interval sizes |[{}, {@code ac}]|
@@ -298,15 +295,15 @@ public class ThirdOrderAlgorithm {
 	 * @see #computeEquivalenceClasses()
 	 * @see #gatherAllMunuetaEquivalenceClasses()
 	 */
-	public Map<MNECode, Long> computeMunuetaEquivalenceClasses() {
+	public Map<BigInteger, Long> computeMunuetaEquivalenceClasses() {
 		Iterator<Entry<AntiChain, Long>> it = getEquivalenceClasses().entrySet().iterator();
 		AntiChainInterval space = AntiChainInterval.fullSpace(nMin3);
 		Set<int[]> g = AntiChain.universeFunction(nMin3).symmetryGroup();
 
 		Entry<AntiChain, Long> entry;
 		AntiChain mu;
-		MNECode code;
-		TreeMap<MNECode, Long> temp;
+		BigInteger code;
+		TreeMap<BigInteger, Long> temp;
 
 		while(it.hasNext() && !isInterrupted()) {
 			entry = it.next();
@@ -330,7 +327,7 @@ public class ThirdOrderAlgorithm {
 		if(waitForOthers()) {
 			try {
 				//TODO: possible without TreeMap (e.g. Hash values)?
-				Map<MNECode, Long> merged = gatherAllMunuetaEquivalenceClasses().stream()
+				Map<BigInteger, Long> merged = gatherAllMunuetaEquivalenceClasses().stream()
 						.map(Map::entrySet).flatMap(Set::stream)
 						.collect(Collectors.toMap(
 								Entry::getKey, 
@@ -366,9 +363,9 @@ public class ThirdOrderAlgorithm {
 	 * @see #gatherSum()
 	 */
 	public BigInteger computeSum() {
-		Iterator<Entry<MNECode, Long>> it = getMunuetaEquivalenceClasses().entrySet().iterator();
+		Iterator<Entry<BigInteger, Long>> it = getMunuetaEquivalenceClasses().entrySet().iterator();
 
-		Entry<MNECode, Long> entry;
+		Entry<BigInteger, Long> entry;
 		MuNuEta mne;
 		long factor;
 		long temp;
@@ -457,9 +454,9 @@ public class ThirdOrderAlgorithm {
 	 * @throws 	MPIException 
 	 *        	if something goes wrong with intercommunication between the nodes
 	 */
-	private Collection<Map<MNECode, Long>> gatherAllMunuetaEquivalenceClasses() 
+	private Collection<Map<BigInteger, Long>> gatherAllMunuetaEquivalenceClasses() 
 			throws MPIException {
-		Collection<Map<MNECode, Long>> result = new ArrayList<>(getNumberOfNodes());
+		Collection<Map<BigInteger, Long>> result = new ArrayList<>(getNumberOfNodes());
 		byte[] sendbuf = serialize((Serializable) getMunuetaEquivalenceClasses());
 		int[] count;
 		byte[] buf;
@@ -469,7 +466,7 @@ public class ThirdOrderAlgorithm {
 			MPI.COMM_WORLD.bcast(count, count.length, MPI.INT, i);
 			buf = getRank() == i ? buf = sendbuf : new byte[count[0]];
 			MPI.COMM_WORLD.bcast(buf, buf.length, MPI.BYTE, i);
-			result.add((Map<MNECode, Long>) deserialize(buf));
+			result.add((Map<BigInteger, Long>) deserialize(buf));
 		}
 		
 		return result;

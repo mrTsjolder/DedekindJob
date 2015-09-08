@@ -1,6 +1,5 @@
 package step3;
 
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -583,13 +582,13 @@ public class MuNuEta implements Comparable<MuNuEta> {
 	 * @param ne a set of non equivalent antichains with the sizes of their equivalence classes
 	 * @return a map of equivalenceclasses with their smallest (compareTo) representative
 	 */
-	public static SortedMap<MNECode, Long> equivalenceClassesCoded(int n,
+	public static SortedMap<BigInteger, Long> equivalenceClassesCoded(int n,
 			SortedMap<AntiChain, Long> ne) {
-		SortedMap<MNECode, Long> result = new TreeMap<>();
+		SortedMap<BigInteger, Long> result = new TreeMap<>();
 		Set<int[]> g = AntiChain.universeFunction(n).symmetryGroup();
 		AntiChainInterval space = AntiChainInterval.fullSpace(n);
 		AntiChain etamu, etanu;
-		MNECode mne;
+		BigInteger mne;
 		
 		for(Entry<AntiChain, Long> entry : ne.entrySet()) {
 			for(AntiChain nu : space) {
@@ -616,15 +615,15 @@ public class MuNuEta implements Comparable<MuNuEta> {
 	 * @return a map of equivalenceclasses with their smallest (compareTo) representative
 	 * @throws InterruptedException 
 	 */
-	public static SortedMap<MNECode,Long> equivalenceClassesCoded(int n, final SortedMap<AntiChain, Long> ne, int p) throws InterruptedException {
-		SortedMap<MNECode,Long> res = new TreeMap<>();
+	public static SortedMap<BigInteger,Long> equivalenceClassesCoded(int n, final SortedMap<AntiChain, Long> ne, int p) throws InterruptedException {
+		SortedMap<BigInteger,Long> res = new TreeMap<>();
 		final Set<int[]> g = AntiChain.universeFunction(n).symmetryGroup(); // n!
 		final AntiChainInterval space = AntiChainInterval.fullSpace(n);
 
-		CollectorMap<MNECode> theCollector = new CollectorMap<>(p);
+		CollectorMap<BigInteger> theCollector = new CollectorMap<>(p);
 
 		for (final AntiChain mu : ne.keySet()) {
-			new AThread<MNECode>(theCollector) {
+			new AThread<BigInteger>(theCollector) {
 
 				@Override
 				public void doTheJob() {
@@ -656,19 +655,19 @@ public class MuNuEta implements Comparable<MuNuEta> {
 	 * @param pool
 	 * @return a map of equivalenceclasses with their smallest (compareTo) representative
 	 */
-	public static SortedMap<MNECode,Long> equivalenceClassesCoded(int n, SortedMap<AntiChain, Long> ne, ExecutorService pool) {
-		SortedMap<MNECode,Long> res = new TreeMap<>();
+	public static SortedMap<BigInteger,Long> equivalenceClassesCoded(int n, SortedMap<AntiChain, Long> ne, ExecutorService pool) {
+		SortedMap<BigInteger,Long> res = new TreeMap<>();
 		Set<int[]> g = AntiChain.universeFunction(n).symmetryGroup(); // n!
 		AntiChainInterval space = AntiChainInterval.fullSpace(n);
-		ArrayList<Future<SortedMap<MNECode, Long>>> futures = new ArrayList<>(ne.size());
+		ArrayList<Future<SortedMap<BigInteger, Long>>> futures = new ArrayList<>(ne.size());
 
 		for (Entry<AntiChain, Long> e : ne.entrySet()) {
 			for(AntiChain nu : space) {
-				futures.add(pool.submit(new Callable<SortedMap<MNECode, Long>>() {
+				futures.add(pool.submit(new Callable<SortedMap<BigInteger, Long>>() {
 	
 						@Override
-						public SortedMap<MNECode, Long> call() {
-							SortedMap<MNECode, Long> temp = new TreeMap<>();
+						public SortedMap<BigInteger, Long> call() {
+							SortedMap<BigInteger, Long> temp = new TreeMap<>();
 							AntiChain mu = e.getKey();
 							AntiChain etamu = new AntiChain(mu);
 							etamu.removeAll(nu); // (n n/2)
@@ -676,7 +675,7 @@ public class MuNuEta implements Comparable<MuNuEta> {
 							etanu.removeAll(mu); // (n n/2)
 							
 							for (AntiChain eta : new AntiChainInterval(etamu.join(etanu),mu.join(nu))) { // 2^(n n/2)
-								MNECode mne = new MuNuEta(mu,nu,eta).standard(g).encode(); // n!
+								BigInteger mne = new MuNuEta(mu,nu,eta).standard(g).encode(); // n!
 								temp.merge(mne, e.getValue(), (v1, v2) -> v1 + v2);
 							}
 							return temp;
@@ -687,8 +686,8 @@ public class MuNuEta implements Comparable<MuNuEta> {
 		}
 		
 		try {
-			for(Future<SortedMap<MNECode, Long>> f : futures)
-				for(Entry<MNECode, Long> e : f.get().entrySet())
+			for(Future<SortedMap<BigInteger, Long>> f : futures)
+				for(Entry<BigInteger, Long> e : f.get().entrySet())
 					res.merge(e.getKey(), e.getValue(), (v1, v2) -> v1 + v2);
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
@@ -701,87 +700,24 @@ public class MuNuEta implements Comparable<MuNuEta> {
 		return "(" + mu + ", " + nu + ", " + eta + ")";
 	}
 	
-	public MNECode encode() {
-		return new MNECode(mu.encode(), nu.encode(), eta.encode());
+	public BigInteger encode() {
+		BigInteger result = eta.encode();
+		BigInteger tail = nu.encode();
+		result = result.shiftLeft(4 * (int) Math.ceil(tail.bitLength() / 4.0) + 8).add(tail);
+		tail = mu.encode();
+		return result.shiftLeft(4 * (int) Math.ceil(tail.bitLength() / 4.0) + 8).add(tail);
 	}
 	
-	public static MuNuEta decode(MNECode b) {
-		return new MuNuEta(AntiChain.decode(b.getM()), AntiChain.decode(b.getN()), AntiChain.decode(b.getE()));
-	}
-
-	/**
-	 * more memory-friendly way to represent a {@code MuNuEta} object
-	 */
-	public static final class MNECode implements Comparable<MNECode>, Serializable {
-		
-		private static final long serialVersionUID = 383513807507254042L;
-		
-		private final BigInteger m;
-		private final BigInteger n;
-		private final BigInteger e;
-
-
-		public MNECode(BigInteger encodedMu, BigInteger encodedNu, BigInteger encodedEta) {
-			m = encodedMu;
-			n = encodedNu;
-			e = encodedEta;
-		}
-
-		/**
-		 * @return the mu
-		 */
-		public final BigInteger getM() {
-			return m;
-		}
-
-		/**
-		 * @return the nu
-		 */
-		public final BigInteger getN() {
-			return n;
-		}
-
-		/**
-		 * @return the eta
-		 */
-		public final BigInteger getE() {
-			return e;
-		}
-
-		@Override
-		public int compareTo(MNECode o) {
-			int res = getM().compareTo(o.getM());
-			if(res == 0)
-				res = getN().compareTo(o.getN());
-			return res == 0 ? getE().compareTo(o.getE()) : res;
-		}
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((e == null) ? 0 : e.hashCode());
-			result = prime * result + ((m == null) ? 0 : m.hashCode());
-			result = prime * result + ((n == null) ? 0 : n.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			try {
-				return compareTo((MNECode) obj) == 0;
-			} catch (Exception e) {
-				return false;
-			}
-		}
-		
-		@Override
-		public String toString() {
-			return "(" + AntiChain.decode(m) + ", "
-					+ AntiChain.decode(n) + ", "
-					+ AntiChain.decode(e) + ")";
-		}
-
+	public static MuNuEta decode(BigInteger code) {
+		AntiChain mu = new AntiChain();
+		code = AntiChain.decode(mu, code);
+		if(mu.isEmpty()) code = code.shiftRight(8);
+		AntiChain nu = new AntiChain();
+		code = AntiChain.decode(nu, code);
+		if(nu.isEmpty()) code = code.shiftRight(8);
+		AntiChain eta = new AntiChain();
+		AntiChain.decode(eta, code);
+		return new MuNuEta(mu, nu, eta);
 	}
 
 }

@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Map;
 
-import step3.MuNuEta.MNECode;
 import amfsmall.AntiChain;
 
 /**
@@ -50,7 +49,7 @@ public class FinishedState extends ComputationState {
 	}
 
 	@Override
-	Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
+	Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
 		return getMunuetaEquivalenceClasses();
 	}
 

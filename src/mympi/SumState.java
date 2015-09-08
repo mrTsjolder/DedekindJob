@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Map;
 
-import step3.MuNuEta.MNECode;
 import amfsmall.AntiChain;
 
 class SumState extends ComputationState {
@@ -43,7 +42,7 @@ class SumState extends ComputationState {
 	}
 
 	@Override
-	Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
+	Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo) {
 		return getMunuetaEquivalenceClasses();
 	}
 
@@ -80,7 +79,7 @@ class SumState extends ComputationState {
 			throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		setLeftIntervalSizes((Map<AntiChain, Long>) in.readObject());
-		setMunuetaEquivalenceClasses((Map<MNECode, Long>) in.readObject());
+		setMunuetaEquivalenceClasses((Map<BigInteger, Long>) in.readObject());
 		setSum((BigInteger) in.readObject());
 		// turn back counter with one, because the last iteration failed
 		setCounter(in.readInt() - 1);

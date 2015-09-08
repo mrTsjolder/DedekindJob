@@ -4,9 +4,6 @@
 package amfsmall;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -16,8 +13,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import posets.IntervalPoset;
-import posets.IntervalPosetCertificat;
 import posets.SetsPoset;
 
 /**
@@ -638,181 +633,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		}
 	};
 	
-	public static Parser<AntiChainInterval> parser() {
-		return new Parser<AntiChainInterval>() {
-
-			
-			@Override
-			public AntiChainInterval parse(String S) throws SyntaxErrorException {
-
-				return AntiChainInterval.parse(S);
-			}
-			
-			@Override
-			public boolean makesSense(String input) {
-				try {
-					AntiChainInterval.parse(input);
-				}
-				catch (SyntaxErrorException e) {
-					return false;
-				}
-				return true;
-			}
-
-			
-		};
-	}
-
-	/**
-	 * parsing function
-	 * inverse of toString
-	 * @param r
-	 * @return the function described by r
-	 * throws SyntaxErrorException must be thrown if no object can be returned
-	 */
-	private static AntiChainInterval parse(String r) throws SyntaxErrorException{
-//		System.out.println("Interval parsing " + r);
-		
-		r = Parser.removeSpaces(r);
-
-//		System.out.println((t++) + " : " + r);
-		
-		int opening = r.indexOf('[');
-		boolean closedBottom = false;
-		if (opening == 0) closedBottom = true;
-		else {
-			opening = r.indexOf(']');
-			if (opening == 0) closedBottom = false;
-		}
-		if (opening != 0) throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-				+ r + "\": No introducing '[' or ']' found");
-
-		r = r.substring(1); // skip bottom bracket
-//		System.out.println((t++) + " : " + r);
-		
-		
-		AntiChain bottom;
-		try {
-			bottom = AntiChain.parser().parse(r);
-		} catch (SyntaxErrorException e) {
-			throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-					+ r + "\": no AntiChain found\n(" + e + ")");
-		}
-
-		int bottomEnd = r.indexOf('}');
-		if (bottomEnd + 2 > r.length()) throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-				+ r + "\": unexpected ending\n");
-		
-		if (r.charAt(bottomEnd + 1) != ',') throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-				+ r + "\": expected ,\n");
-		
-		r = r.substring(bottomEnd + 2);
-//		System.out.println((t++) + " : " + r);
-		
-		AntiChain top;
-		try {
-			top = AntiChain.parser().parse(r);
-		} catch (SyntaxErrorException e) {
-			throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-					+ r + "\": no AntiChain found\n(" + e + ")");
-		}
-
-		int topEnd = r.indexOf('}');
-		r = r.substring(topEnd);
-//		System.out.println((t++) + " : " + r);
-		
-		
-		if (r.length() < 2) throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-				+ r + "\": unexpected ending\n");
-		
-		r = r.substring(1);
-//		System.out.println((t++) + " : " + r);
-		
-
-		boolean closedTop = false;
-		int closure = r.indexOf(']');
-		if (closure == 0) closedTop = true;
-		else {
-			closure = r.indexOf('[');
-			if (closure == 0) closedTop = false;
-		}
-		if (closure != 0) throw new SyntaxErrorException("AntiChainInterval parsing \"" 
-				+ r  + "\" : No closing '[' or ']' found");
-
-		return new AntiChainInterval(bottom,top,closedBottom,closedTop);
-	}
-	
-	/**
-	 * get the poset underlying at this interval
-	 * The poset starts from the bottom of the interval (the bottom does not belong to the poset)
-	 * and contains all elements with only one predecessor in the interval
-	 * @return a mapping of the bottom and all elements in the poset 
-	 * 			with their set of immediate successors in the poset
-	 */
-	public HashMap<AntiChain,HashSet<AntiChain>> getRootElements() {
-		HashMap<AntiChain,HashSet<AntiChain>> poSets = new HashMap<AntiChain,HashSet<AntiChain>>();
-		AntiChain bottom = getBottom();
-		poSets.put(bottom,new HashSet<AntiChain>());
-		HashSet<SmallBasicSet> level = new HashSet<SmallBasicSet>();
-		for (SmallBasicSet t : getTop()) if (!bottom.ge(t)) level.add(t);
-		HashSet<SmallBasicSet> checked = new HashSet<SmallBasicSet>();
-		while (!level.isEmpty()) {
-			HashSet<SmallBasicSet> nextLevel = new HashSet<SmallBasicSet>();		
-			for (SmallBasicSet t : level) {
-				if (!checked.contains(t)) {
-					checked.add(t);
-					AntiChain e = new AntiChain(bottom);
-					e.addConditionally(t);
-					poSets.put(e, new HashSet<AntiChain>());
-					for (SmallBasicSet ti : t.immediateSubSets())
-						if (!bottom.ge(ti)) nextLevel.add(ti);
-				}
-			}
-			level = nextLevel;
-		}
-		// set the immediate succession
-		for (AntiChain f : poSets.keySet())
-			for (AntiChain g : poSets.keySet()) {
-				if (!f.equals(g) && f.le(g)) {
-					boolean toBeAdded = true;
-					for (Iterator<AntiChain> cit = poSets.get(f).iterator();cit.hasNext();) {
-						AntiChain c = cit.next();
-						if (g.ge(c)) {toBeAdded = false;break;}
-						if (g.le(c)) cit.remove();
-					}
-					if (toBeAdded) poSets.get(f).add(g);
-				}
-			}
-		return poSets;
-	}
-	
-
-	/**
-	 * get the poset underlying the dual of this interval
-	 * The poset starts from the top of the interval (the top does not belong to the poset)
-	 * and contains all elements with only one successor in the interval
-	 * @return a mapping of the top and all elements in the poset 
-	 * 			with their set of immediate predecessors in the poset
-	 */
-	public HashMap<AntiChain,HashSet<AntiChain>> getDualRootElements() {
-		SmallBasicSet universe = getTop().sp();
-		
-		AntiChain dualTop = getTop().dual(universe);
-		AntiChain dualBottom = getBottom().dual(universe);
-		
-		HashMap<AntiChain,HashSet<AntiChain>> dualPoSet = new AntiChainInterval(dualTop,dualBottom).getRootElements();
-		HashMap<AntiChain,HashSet<AntiChain>> poSet = new HashMap<AntiChain,HashSet<AntiChain>>();
-		
-		for (AntiChain f : dualPoSet.keySet()) {
-			AntiChain fd = f.dual(universe);
-			poSet.put(fd, new HashSet<AntiChain>());
-			for (AntiChain g : dualPoSet.get(f)) {
-				poSet.get(fd).add(g.dual(universe));
-			}
-		}
-		return poSet;
-	}
-	
 	/**
 	 * mu(tau,alfa) is the largest AMF within the interval for which
 	 *        mu.meet(alfa) intersection alfa == tau 
@@ -863,33 +683,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		return new AntiChainInterval(bottom, mu(tau,alfa));
 	}
 
-	/**
-	 * iota(tau, alfa) is the interval of elements chi in this satisfying
-	 *        chi.join(alfa).equals(tau)
-	 * @pre alfa is in the interval
-	 * @pre tau is in the interval and tau.le(alfa)
-	 * @param tau
-	 * @param alfa
-	 * @return [getBottom().join(tau.iota(alfa), tau]
-	 */
-	public AntiChainInterval iota(AntiChain tau, AntiChain alfa) {
-		AntiChain b = tau.iota(alfa);
-		return new AntiChainInterval(getBottom().join(b), tau);
-	}
-
-	/**
-	 * omicron(tau, alfa) is the interval of elements chi in this satisfying
-	 *        chi.meet(alfa).equals(tau)
-	 * @pre alfa is in the interval
-	 * @pre tau is in the interval and tau.le(alfa)
-	 * @param tau
-	 * @param alfa
-	 * @return [tau, getTop().meet(tau.omicron(alfa)]
-	 */
-	public AntiChainInterval omicron(AntiChain tau, AntiChain alfa) {
-		return new AntiChainInterval(tau, getTop().meet(tau.omicron(alfa)));
-	}
-
 	/*
 	 * return the dual of this interval in the smallest lattice it is contained in
 	 */
@@ -897,45 +690,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		SmallBasicSet span = getBottom().sp().union(getTop().sp());
 		return new AntiChainInterval(getTop().dual(span),getBottom().dual(span));
 	}
-
-	/**
-	 * Computes a standard version of this or of its dual
-	 * whichever has the shortest string representation
-	 * @return
-	 */
-	public AntiChainInterval standard() {
-		IntervalPoset fpos = new IntervalPoset(this);
-		IntervalPosetCertificat certif = new IntervalPosetCertificat(fpos);
-		AntiChainInterval f  = certif.getStandardInterval();
-		// I do not know why this is needed, it does produce better standards
-		String fDesc = f.toString();
-		String oldDesc;
-		int cnt = 5;
-		do {
-			cnt--;
-			oldDesc = fDesc;
-			f = new IntervalPosetCertificat(new IntervalPoset(f)).getStandardInterval();
-			fDesc = f.toString();
-		} while (cnt > 0 && !fDesc.equals(oldDesc));
-
-		fpos = new IntervalPoset(this.dual());
-		certif = new IntervalPosetCertificat(fpos);
-		AntiChainInterval fd  = certif.getStandardInterval();
-		String fdDesc = f.toString();
-		cnt = 5;
-		do {
-			cnt--;
-			oldDesc = fDesc;
-			fd = new IntervalPosetCertificat(new IntervalPoset(fd)).getStandardInterval();
-			fdDesc = fd.toString();
-		} while (cnt>0 && !fdDesc.equals(oldDesc));
-
-		if (fDesc.compareTo(fdDesc) < 0)
-			return f;
-		else return fd;
-			
-	}
-
 
 	/**
 	 * Computes a naive standard of this interval in space of dimension n
@@ -983,18 +737,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		}
 		symmetries.removeAll(toBeRemoved);
 		return symmetries;
-	}
-	/**
-	 * classify all amf in the interval according to the symmetries in top and bottom
-	 * @return a sorted map with the encoding of the representative and the number of elements in the equivalence class.
-	 */
-	public SortedMap<BigInteger,Long> getEquivalenceClasses() {
-		Set<int[]> symmetries = this.symmetryGroup();
-		TreeMap<BigInteger, Long> res = new TreeMap<BigInteger,Long>();
-		for (AntiChain f : this) {
-			 Storage.store(res,f.standard(symmetries).encode());
-		}
-		return res;
 	}
 
 	/**
@@ -1071,21 +813,6 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		return ret;
 	}
 
-
-	/**
-	 * Construct the basis of a partition this interval
-	 * @return the sorted map of all representatives of equivalence classes according to the symmetry group of fint
-	 * such that this == union for all tau in all equivalence classes of fint.omega(tau,alfa)
-	 * @param alfa the generator for the partition
-	 * @pre alfa is an amf in this
-	 */
-	public SortedMap<BigInteger, Long> decomposition(AntiChain alfa) {
-		// the symmetry group of this
-		Set<int[]> symm = symmetryGroup();
-		// the amf-equivalence classes for the symmetry group of fint
-		return new AntiChainInterval(getBottom(),alfa).getEquivalenceClasses(symm);
-	}
-
 	/**
 	 * returns the interval [{},{N}]
 	 * @param n
@@ -1096,49 +823,12 @@ public class AntiChainInterval implements Iterable<AntiChain>,Comparable<AntiCha
 		return new AntiChainInterval(AntiChain.emptyFunction(N), AntiChain.universeFunction(n));
 	}
 
-	/**
-	 * generate the complete functions in this interval
-	 * complete functions are such that each set is involved in at least one immediate successors
-	 * | for each a in result.keySet: for each s in a : exists x in N : all subsets of s U {x} are in [{},a]
-	 * @return
-	 */
-	public SortedMap<AntiChain,Long> completeAntiChains() {
-		SortedMap<AntiChain,Long> ret = new TreeMap<AntiChain,Long>();
-		SetsPoset poset = new SetsPoset(this);
-		for (AntiChain a : this) {
-			AntiChain c = new AntiChain();
-			for (SmallBasicSet s : a) {
-				for (SmallBasicSet sub : poset.getPredecessors(s))
-					c.addConditionally(sub);
-			}
-			if (c.ge(getBottom())) Storage.store(ret,c);
-		}
-		return ret;
-	}
-
 	public long latticeSize() {
 		if (!getBottom().le(getTop())) return 0;
 		else if (getBottom().equals(getTop())) 
 			if (this.isClosedAtBottom() && this.isClosedAtTop()) return 1;
 			else return 0;
 		else return new SetsPoset(this).getLatticeSize();
-	}
-
-	/**
-	 * Convert this interval to an array of AntiChain
-	 * @pre this.size() < Integer.MAXINT
-	 * @pre this.size() is less than the maximum size for an array
-	 * @return
-	 */
-	public AntiChain[] toArray() {
-		AntiChain[] res = new AntiChain[(int) this.latticeSize()];
-		int i=0;
-		for (AntiChain r : this) res [i++] = r;
-		return res;
-	}
-
-	public AntiChainInterval intersect(AntiChainInterval sol1) {
-		return new AntiChainInterval(getBottom().join(sol1.getBottom()), getTop().meet(sol1.getTop()));
 	}
 
 	/**

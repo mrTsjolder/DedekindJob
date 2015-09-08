@@ -18,7 +18,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import step3.MuNuEta.MNECode;
 import amfsmall.AntiChain;
 
 /**
@@ -60,7 +59,7 @@ abstract class ComputationState implements Serializable {
 	private transient int counter = 0;
 	private transient Map<AntiChain, Long> equivalenceClasses = null;
 	private transient Map<AntiChain, Long> leftIntervalSizes = null;
-	private transient Map<MNECode, Long> munuetaEquivalenceClasses = null;
+	private transient Map<BigInteger, Long> munuetaEquivalenceClasses = null;
 	private transient BigInteger sum = null;
 	
 	/**
@@ -155,13 +154,13 @@ abstract class ComputationState implements Serializable {
 	}
 
 	/** @return the (mu,nu,eta) equivalence classes computed thus far, might be {@code null} */
-	protected Map<MNECode, Long> getMunuetaEquivalenceClasses() {
+	protected Map<BigInteger, Long> getMunuetaEquivalenceClasses() {
 		return munuetaEquivalenceClasses;
 	}
 
 	/** @param munuetaEquivalenceClasses the (mu,nu,eta) equivalence classes to set */
 	protected void setMunuetaEquivalenceClasses(
-			Map<MNECode, Long> munuetaEquivalenceClasses) {
+			Map<BigInteger, Long> munuetaEquivalenceClasses) {
 		this.munuetaEquivalenceClasses = munuetaEquivalenceClasses;
 	}
 	
@@ -295,7 +294,7 @@ abstract class ComputationState implements Serializable {
 	 * 
 	 * @since Java 8
 	 */
-	protected void addToMunuetaEquivalenceClass(MNECode code, long nr) 
+	protected void addToMunuetaEquivalenceClass(BigInteger code, long nr) 
 			throws NullPointerException {
 		if(getMunuetaEquivalenceClasses() == null)
 			initMunuetaEquivalenceClasses();
@@ -307,7 +306,7 @@ abstract class ComputationState implements Serializable {
 	 * Add all equivalence classes from a given map to the (mu,nu,eta) 
 	 * equivalence classes computed thus far. This method has the same result as: 
 	 * <pre>
-	 * {@code for(Entry<MNECode, Long> entry : toBeAdded.entrySet())
+	 * {@code for(Entry<BigInteger, Long> entry : toBeAdded.entrySet())
 	 *     addToMunuetaEquivalenceClass(entry.getKey(), entry.getValue());}
 	 * </pre>
 	 * 
@@ -315,9 +314,9 @@ abstract class ComputationState implements Serializable {
 	 *       	The {@code Map} containing the equivalence classes and their size to be added.
 	 * 
 	 * @since Java 8
-	 * @see #addToMunuetaEquivalenceClass(MNECode, long)
+	 * @see #addToMunuetaEquivalenceClass(BigInteger, long)
 	 */
-	protected void addAllToMunuetaEquivalenceClasses(Map<MNECode, Long> toBeAdded) 
+	protected void addAllToMunuetaEquivalenceClasses(Map<BigInteger, Long> toBeAdded) 
 			throws NullPointerException {
 		if(getMunuetaEquivalenceClasses() == null)
 			initMunuetaEquivalenceClasses();
@@ -372,7 +371,7 @@ abstract class ComputationState implements Serializable {
 
 	abstract Map<AntiChain, Long> computeLeftIntervalSizes(ThirdOrderAlgorithm algo);
 
-	abstract Map<MNECode, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo);
+	abstract Map<BigInteger, Long> computeMunuetaEquivalenceClasses(ThirdOrderAlgorithm algo);
 
 	abstract BigInteger computeSum(ThirdOrderAlgorithm algo);
 	

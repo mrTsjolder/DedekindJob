@@ -2,9 +2,7 @@ package amfsmall;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -207,14 +205,6 @@ public class PoSetOld {
 		TreeSet<Integer> pX = immediateP.get(x);
 		if (pX.isEmpty()) return res;
 		for (int p : pX) res.addAll(under(p));
-		return res;
-	}
-
-	private String listSuccessors(String string, Integer s) {
-		TreeSet<Integer> succ = immediateS.get(s);
-		if (succ.isEmpty()) return string + s + "\n";
-		String res = "";
-		for (Integer x : succ) res += listSuccessors(string + s + "->", x);
 		return res;
 	}
 }
