@@ -19,6 +19,21 @@ class InitState extends ComputationState {
 	/** Identification number needed for serialisation. */
 	private static final long serialVersionUID = -7296332744165641916L;
 
+	/**
+	 * Initialize this state object with a previous state.
+	 * 
+	 * @param 	rank
+	 *       	The rank of the node to which this state belongs
+	 * @param 	nrOfNodes
+	 * 			The number of nodes that are computing
+	 * @param 	order
+	 *       	The order of the Dedekind number being computed
+	 * @throws 	IllegalArgumentException 
+	 *        	if {@code previous} does not meet the requirements 
+	 *        	to go to this state.
+	 * 
+	 * @see ComputationState#ComputationState(int, int, int)
+	 */
 	InitState(int rank, int nrOfNodes, int order) 
 			throws IllegalArgumentException {
 		super(rank, nrOfNodes, order);

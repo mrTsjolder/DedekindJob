@@ -92,9 +92,6 @@ abstract class ComputationState implements Serializable {
 	 * @param 	previous 
 	 *       	The previous state the computation was in.
 	 * @throws	NullPointerException if {@code previous} is {@code null}
-	 * @throws 	IllegalArgumentException 
-	 *        	if {@code previous} does not meet the requirements 
-	 *        	to go to this state.
 	 * 
 	 * @see   	#ComputationState(int, int, int)
 	 */

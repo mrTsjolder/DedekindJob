@@ -14,8 +14,20 @@ class SumState extends ComputationState {
 	/** Identification number needed for serialisation. */
 	private static final long serialVersionUID = 6895644951054876307L;
 
+	/**
+	 * Initialize this state object with a previous state.
+	 * 
+	 * @param 	previous 
+	 *       	The previous state the computation was in.
+	 * @throws	NullPointerException if {@code previous} is {@code null}
+	 * @throws 	IllegalArgumentException 
+	 *        	if {@code previous} does not meet the requirements 
+	 *        	to go to this state.
+	 * 
+	 * @see ComputationState#ComputationState(ComputationState)
+	 */
 	SumState(ComputationState previous) 
-			throws IllegalArgumentException {
+			throws NullPointerException, IllegalArgumentException {
 		super(previous);
 		if(getMunuetaEquivalenceClasses() == null || getMunuetaEquivalenceClasses().isEmpty())
 			throw new IllegalArgumentException(
