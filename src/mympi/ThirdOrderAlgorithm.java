@@ -318,7 +318,8 @@ public class ThirdOrderAlgorithm {
 					}
 				}
 				
-				getCurrentState().addAllToMunuetaEquivalenceClasses(temp);
+				if(!isInterrupted())
+					getCurrentState().addAllToMunuetaEquivalenceClasses(temp);
 			}
 
 			it.remove();
@@ -381,7 +382,8 @@ public class ThirdOrderAlgorithm {
 				for(AntiChain abc : new AntiChainInterval(mne.getBottom(), mne.getMaxBottom()))
 					temp += mne.p3(abc) * getLeftIntervalSizes().get(abc.standard()) * factor;
 				
-				getCurrentState().addToSum(BigInteger.valueOf(temp));
+				if(!isInterrupted())
+					getCurrentState().addToSum(BigInteger.valueOf(temp));
 			}
 
 			it.remove();
